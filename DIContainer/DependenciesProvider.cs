@@ -6,7 +6,7 @@ using System.Collections;
 
 namespace DIContainer
 {
-    class DependenciesProvider
+    public class DependenciesProvider
     {
         private DependenciesConfiguration configuration;
 
@@ -31,17 +31,32 @@ namespace DIContainer
             List<ImplementationInfo> infos = GetImplementationsInfos(dependencyType);
             if (infos == null && !t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
                 return null;
-            if (t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))//t.GetInterface(nameof(IBaseGenerator)) != null
+            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))//t.GetInterface(nameof(IBaseGenerator)) != null
             {
                 dependencyType = t.GetGenericArguments()[0];
-                IList implementations = (IList)Activator.CreateInstance(typeof(IList<>).MakeGenericType(dependencyType));
+                infos = GetImplementationsInfos(dependencyType);
+                List<object> implementations = new List<object>();
                 foreach(ImplementationInfo info in infos)
                 {
                     implementations.Add(GetImplementation(info));
                 }
-                return implementations;
+                return Convert(implementations, dependencyType);
             }
             return GetImplementation(infos[0]);
+        }
+
+        private object Convert(List<object> implementations,Type t)
+        {
+            Type newT = typeof(List<>).MakeGenericType(t);
+            var enumerableType = typeof(System.Linq.Enumerable);
+            var castMethod = enumerableType.GetMethod(nameof(System.Linq.Enumerable.Cast)).MakeGenericMethod(t);
+            var toListMethod = enumerableType.GetMethod(nameof(System.Linq.Enumerable.ToList)).MakeGenericMethod(t);
+
+            IEnumerable<object> itemsToCast = implementations;
+
+            var castedItems = castMethod.Invoke(null, new[] { itemsToCast });
+
+            return toListMethod.Invoke(null, new[] { castedItems });
         }
 
         private object GetImplementation(ImplementationInfo implInfo)

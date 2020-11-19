@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ImplementationClasses\" />
+    <ProjectReference Include="..\DIContainer\DIContainer.csproj" />
   </ItemGroup>
 
 </Project>

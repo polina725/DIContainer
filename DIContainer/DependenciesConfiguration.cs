@@ -3,12 +3,6 @@ using System.Collections.Generic;
 
 namespace DIContainer
 {
-    public enum DependencyTTL
-    {
-        InstancePerDependency, //new object when call resolve
-        Singleton //one object returns when call resolve
-    }
-
     public class DependenciesConfiguration
     {
         public readonly Dictionary<Type, List<ImplementationInfo>> registedDependencies;
