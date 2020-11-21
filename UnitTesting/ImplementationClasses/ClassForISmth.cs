@@ -2,8 +2,7 @@
 
 namespace UnitTesting.ImplementationClasses
 {
-    class BigDataClass
+    class ClassForISmth : ISmth
     {
-        public BigDataClass(IData d) { }
     }
 }

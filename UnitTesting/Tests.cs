@@ -10,7 +10,6 @@ namespace UnitTesting
     public class Tests
     {
         private DependenciesProvider provider;
-       // private DependenciesConfiguration config;
 
         [TestInitialize]
         public void Init()
@@ -19,27 +18,25 @@ namespace UnitTesting
             config.Register<IService, FirstForIService>();
             config.Register<IService, SecondClForIService>();
             config.Register<IClient, ClassForIClient>();
+            config.Register<ISmth, ClassForISmth>(true);
             config.Register<IData, ClassForIData>(true);
-            config.Register<IData, BigDataClass>(true);
             provider = new DependenciesProvider(config);
         }
 
         [TestMethod]
-        public void SimpleDendency()
+        public void SimpleDependency()
         {
             object obj = provider.Resolve<List<int>>();
             Assert.IsNull(obj);
-            ClassForIData cl = (ClassForIData)provider.Resolve<IData>();
+            ClassForISmth cl = (ClassForISmth)provider.Resolve<ISmth>();
             Assert.IsNotNull(cl);
-            ClassForIData cl2 = (ClassForIData)provider.Resolve<IData>();
-            Assert.AreEqual(cl, cl2);
         }
 
         [TestMethod]
         public void DependencyTTLCheck()
         {
-            ClassForIData cl = (ClassForIData)provider.Resolve<IData>();
-            ClassForIData cl2 = (ClassForIData)provider.Resolve<IData>();
+            ClassForISmth cl = (ClassForISmth)provider.Resolve<ISmth>();
+            ClassForISmth cl2 = (ClassForISmth)provider.Resolve<ISmth>();
             Assert.AreEqual(cl, cl2);
             IService s1 = provider.Resolve<IService>();
             IService s2 = provider.Resolve<IService>();
@@ -49,10 +46,24 @@ namespace UnitTesting
         [TestMethod]
         public void ManyImplementationsResolve()
         {
-           // Enumerable t;
             IEnumerable<IService> impls = provider.Resolve<IEnumerable<IService>>();
             Assert.IsNotNull(impls);
             Assert.AreEqual(2, (impls as List<IService>).Count);
         }
+
+        [TestMethod]
+        public void InnerDependencyCheck()
+        {
+            FirstForIService cl = (FirstForIService)provider.Resolve<IService>();
+            Assert.IsNotNull(cl.smth);
+        }
+
+        [TestMethod]
+        public void SimpleRecursionCheck()
+        {
+            ClassForIClient cl = (ClassForIClient)provider.Resolve<IClient>();
+            Assert.IsNull((cl.data as ClassForIData).cl);
+        }
     }
+
 }

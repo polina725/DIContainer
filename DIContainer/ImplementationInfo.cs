@@ -25,7 +25,6 @@ namespace DIContainer
         {
             implClassType = impl;
             isSingleton = _isSingleton;
-            
         }
 
     }

@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Reflection;
-using System.Collections;
 
 namespace DIContainer
 {
     public class DependenciesProvider
     {
         private DependenciesConfiguration configuration;
+        private Stack<Type> recursionStackResolver = new Stack<Type>();
 
         public DependenciesProvider(DependenciesConfiguration config)
         {
@@ -31,7 +31,10 @@ namespace DIContainer
             List<ImplementationInfo> infos = GetImplementationsInfos(dependencyType);
             if (infos == null && !t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
                 return null;
-            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))//t.GetInterface(nameof(IBaseGenerator)) != null
+            if (recursionStackResolver.Contains(t))
+                return null;
+            recursionStackResolver.Push(t);
+            if (t.IsGenericType && t.GetGenericTypeDefinition().Equals(typeof(IEnumerable<>)))
             {
                 dependencyType = t.GetGenericArguments()[0];
                 infos = GetImplementationsInfos(dependencyType);
@@ -40,12 +43,14 @@ namespace DIContainer
                 {
                     implementations.Add(GetImplementation(info));
                 }
-                return Convert(implementations, dependencyType);
+                return ConvertToIEnumerable(implementations, dependencyType);
             }
-            return GetImplementation(infos[0]);
+            object obj = GetImplementation(infos[0]);
+            recursionStackResolver.Pop();
+            return obj;
         }
 
-        private object Convert(List<object> implementations,Type t)
+        private object ConvertToIEnumerable(List<object> implementations,Type t)
         {
             Type newT = typeof(List<>).MakeGenericType(t);
             var enumerableType = typeof(System.Linq.Enumerable);
@@ -75,27 +80,36 @@ namespace DIContainer
 
         private object CreateInstanseForDependency(Type implClassType)
         {
-            ConstructorInfo constructor = implClassType.GetConstructors()[0];
-            ParameterInfo[] parameters = constructor.GetParameters();
-            List<object> paramsValues = new List<object>();
-            foreach(ParameterInfo parameter in parameters)
+            ConstructorInfo[] constructors = implClassType.GetConstructors().OrderByDescending(x => x.GetParameters().Length).ToArray();
+            object implInstance = null;
+            foreach (ConstructorInfo constructor in constructors)
             {
-                if (IsDependecy(implClassType))
-                {
-                    object obj = Resolve(implClassType);
-                    paramsValues.Add(obj);
+                ParameterInfo[] parameters = constructor.GetParameters();
+                List<object> paramsValues = new List<object>();
+                foreach (ParameterInfo parameter in parameters)
+                {               
+                    if (IsDependecy(parameter.ParameterType))
+                    {
+                        object obj = Resolve(parameter.ParameterType);
+                        paramsValues.Add(obj);
+                    }
+                    else
+                    {
+                        paramsValues.Add(Activator.CreateInstance(parameter.ParameterType, null));// null????
+                    }
                 }
-                else
+                try
                 {
-                    paramsValues.Add(Activator.CreateInstance(implClassType));
+                    implInstance = Activator.CreateInstance(implClassType, paramsValues.ToArray());
+                    break;
                 }
+                catch(Exception) { }
             }
-            object implInstance = constructor.Invoke(paramsValues.ToArray());
             return implInstance;
         }
 
         private bool IsDependecy(Type t)
-        {
+        { 
             return configuration.registedDependencies.ContainsKey(t);
         }
 

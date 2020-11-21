@@ -16,6 +16,8 @@ namespace DIContainer
         {
             Type classType = typeof(TImplementation);
             Type interfaceType = typeof(TDependency);
+            if (!interfaceType.IsInterface || classType.IsAbstract || classType.GetInterface(interfaceType.FullName) == null)
+                return;
             if (!registedDependencies.ContainsKey(interfaceType))
             {
                 List<ImplementationInfo> impl = new List<ImplementationInfo>();

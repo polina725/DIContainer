@@ -4,7 +4,7 @@ using System.Text;
 
 namespace UnitTesting.Interfaces
 {
-    interface IClient
+    interface ISmth
     {
     }
 }
