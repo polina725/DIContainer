@@ -14,9 +14,12 @@ namespace DIContainer
 
         public void Register<TDependency, TImplementation>(bool isSingleton = false)
         {
-            Type classType = typeof(TImplementation);
-            Type interfaceType = typeof(TDependency);
-            if (!interfaceType.IsInterface || classType.IsAbstract || classType.GetInterface(interfaceType.FullName) == null)
+            Register(typeof(TDependency), typeof(TImplementation), isSingleton);
+        }
+
+        public void Register(Type interfaceType,Type classType,bool isSingleton = false)
+        {
+            if (!interfaceType.IsInterface || classType.IsAbstract || !interfaceType.IsAssignableFrom(classType) && !interfaceType.IsGenericTypeDefinition)
                 return;
             if (!registedDependencies.ContainsKey(interfaceType))
             {
@@ -26,9 +29,8 @@ namespace DIContainer
             }
             else
             {
-                registedDependencies[interfaceType].Add(new ImplementationInfo(isSingleton,classType));
+                registedDependencies[interfaceType].Add(new ImplementationInfo(isSingleton, classType));
             }
         }
-
     }
 }

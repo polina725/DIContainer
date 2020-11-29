@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace DIContainer
 {
@@ -8,18 +6,18 @@ namespace DIContainer
     {
         public readonly Type implClassType;
         public readonly bool isSingleton;
-        private object implementation;
-        public object Implementation
-        {
-            get
-            {
-                return implementation;
-            }
-            set
-            {
-                implementation = value;
-            }
-        }
+        //private object implementation;
+        //public object Implementation
+        //{
+        //    get
+        //    { 
+        //        return implementation;
+        //    }
+        //    set
+        //    {
+        //        implementation = value;
+        //    }
+        //}
 
         public ImplementationInfo(bool _isSingleton, Type impl)
         {
